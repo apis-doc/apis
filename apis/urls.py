@@ -14,8 +14,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, re_path
+from django.conf import settings
+from django.conf.urls import static
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+
+]
+
+urlpatterns += [
+    # admin
+    path(settings.PROJECT_NAME + '/admin/', admin.site.urls),
+    # static: 高版本中有的可以手动配置, 但要注意官方文档中写明的生产环境下是否开放.
+    re_path(
+        # r'^apis/static/(?P<path>.*)$', static.serve, {'document_root': settings.STATIC_ROOT}
+        rf'{settings.PROJECT_NAME}/static/(?P<path>.*)$', static.serve, {'document_root': settings.STATIC_ROOT}
+    ),
 ]
