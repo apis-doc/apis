@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'main',
 ]
 
 MIDDLEWARE = [
@@ -49,6 +50,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'main.utils.middlewares.log_handlers.RequestLogMiddleware',
+    'main.utils.middlewares.log_handlers.ErrorLogMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -134,6 +137,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # user settings
 PROJECT_NAME = 'apis'
 
+
+# config import
+from apis.conf.log_settings import LOGGING, ENCRYPT_KEYS
 from apis.conf.project_conf import *
 from django.conf import settings
 
