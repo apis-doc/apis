@@ -1,7 +1,7 @@
 import datetime
 import traceback
 import uuid
-
+import json
 from django.http import JsonResponse
 from django.utils.deprecation import MiddlewareMixin
 from django.conf import settings
@@ -22,8 +22,24 @@ class ErrorLogMiddleware(MiddlewareMixin):
         :param _: exception
         :return:
         """
-        # 可根据META中的req-id(uuid)寻找其他值
+        # You can look for other values based on the req-id(uuid) in the META
         exception.put('except', request_default_info(request))
+
+
+def get_user_req_info(request):
+    def get(obj, k):
+        null = f"{k}=None"
+        if isinstance(obj, dict):
+            return obj.get(k, null)
+        return null if not hasattr(obj, k) else getattr(obj, k)
+
+    default = []
+    for key in log_req_keys.keys():
+        _obj = request
+        for attr in key.split('.'):
+            _obj = get(_obj, attr)
+        default += [get(_obj, key) for key in log_req_keys.get(key, list)]
+    return default
 
 
 class RequestLogMiddleware(MiddlewareMixin):
@@ -34,7 +50,7 @@ class RequestLogMiddleware(MiddlewareMixin):
         self.end_time = None  # 程序结束运行时间
 
     def process_request(self, request):
-        self.start_time = datetime.datetime.now()  # 程序开始运行时间
+        self.start_time = datetime.datetime.now()  # Program start time
         request.META['req-id'] = str(uuid.uuid4())
         return None
 
@@ -48,21 +64,18 @@ class RequestLogMiddleware(MiddlewareMixin):
             run_time = (self.end_time - self.start_time).total_seconds()
 
             request_info = request_default_info(request)
-            user_req_info = self.get_user_req_info(request)
+            user_req_info = get_user_req_info(request)
 
             # response_data
-            if isinstance(request, JsonResponse):
-                rsp_data = response.json()
-            else:
-                print(type(response))
-                rsp_data = str(response.content)
+            rsp_data = response.content.decode()
+            rsp_data = json.loads(rsp_data) if isinstance(response, JsonResponse) else rsp_data
             if len(str(rsp_data)) > long_req_length:
-                rsp_data = ''
-            if contains(request.path, encrypt_rsp_request):
+                rsp_data = 'long_req_length'
+            elif contains(request.path, encrypt_rsp_request):
                 rsp_data = req_log.encrypt(rsp_data)
 
             # 记录请求日志
-            handle_info = [str(response.status_code), rsp_data, str(run_time)]
+            handle_info = [str(response.status_code), str(rsp_data), str(run_time)]
             if response.status_code == 200 and isinstance(rsp_data, dict) and int(rsp_data.get('code', '0')) < 5000:
                 log_level = 'info'
             elif response.status_code >= 500:
@@ -81,28 +94,13 @@ class RequestLogMiddleware(MiddlewareMixin):
 
         return response
 
-    def get_user_req_info(self, request):
-        def get(obj, k):
-            null = f"{k}=None"
-            if isinstance(obj, dict):
-                return obj.get(k, null)
-            return null if not hasattr(obj, k) else getattr(obj, k)
-
-        default = []
-        for key in log_req_keys.keys():
-            _obj = request
-            for attr in key.split('.'):
-                _obj = get(_obj, attr)
-            default += [get(_obj, key) for key in log_req_keys.get(key, list)]
-        return default
-
 
 def request_default_info(request):
     schema = request.scheme
     server = request.META.get('HTTP_HOST', 'HTTP_HOST')
     path = request.path
     method = request.method
-    reqid = request.META.get('req-id')
+    req_id = request.META.get('req-id')
 
     access_ip = request.META.get('REMOTE_ADDR')
 
@@ -115,4 +113,4 @@ def request_default_info(request):
     if contains(request.path, encrypt_req_request):
         request_data = req_log.encrypt(request_data)
 
-    return [reqid, f"{schema}://{server}{path}", method, access_ip, user, request_data]
+    return [req_id, f"{schema}://{server}{path}", method, access_ip, user, request_data]

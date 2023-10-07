@@ -20,8 +20,6 @@ class Log(object):
         """
         return log_data
         # todo python3.9 encrypt method
-        data_s = json.dumps(log_data, sort_keys=True, ensure_ascii=True, separators=(', ', ': '))
-        return f"key_word={key_word}[{aes_encrypt(self._aes_key, data_s)}]"
 
     def put(self, level, msg):
         attr_name = level.lower()

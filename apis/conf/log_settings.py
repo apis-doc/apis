@@ -1,10 +1,10 @@
 # --*--*--*--*--*--*- Created by bh at 2022/5/20 14:08 -*--*--*--*--*--*--
 # nohup tail -f request.log >>all.log 2>&1 &
 import datetime
+import logging
 import os
 
 from django.conf import settings
-import logging
 
 
 def request_handler(handler='request'):
@@ -29,8 +29,7 @@ LOGGING = {
         'long_handle_time': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(settings.BASE_DIR, 'logs/long_handle_time.log')
-            ,
+            'filename': os.path.join(settings.BASE_DIR, 'logs/long_handle_time.log'),
             'maxBytes': 1024 * 1024 * 30,
             'backupCount': 2,
             'formatter': 'verbose',
@@ -49,7 +48,7 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': os.path.join(settings.BASE_DIR, 'logs/request.log'),
-            'when': 'MIDNIGHT',
+            # 'when': 'MIDNIGHT',
             'interval': 1,
             'backupCount': 7,
             'atTime': datetime.time(0, 0, 0, 0),
@@ -173,7 +172,7 @@ def add_coloring_to_emit_ansi(fn):
             color = '\x1b[31m'  # red
         # error-red
         elif level_no >= 40:
-            color = '\x1b[35m'  # pink
+            # color = '\x1b[35m'  # pink
             color = '\x1b[31m'  # red
         # warning-yellow
         elif level_no >= 30:
