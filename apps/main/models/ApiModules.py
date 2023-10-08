@@ -1,6 +1,11 @@
 # --*--*--*--*--*--*- Create by bh at 2023/10/4 10:36 -*--*--*--*--*--*--
 from django.db import models
 
+ContentType = (
+    (0, 'application/json'), (1, 'text/html'), (2, 'multipart/form-data'), (3, 'text/plain'),
+    (4, 'application/xml'), (5, 'application/x-www-form-urlencoded'),
+)
+
 
 class Project(models.Model):
     code = models.CharField(max_length=12, verbose_name='编码')
@@ -38,10 +43,7 @@ class Api(models.Model):
         (0, 'POST'), (1, 'GET'), (2, 'DELETE'), (3, 'PUT')
     ))
     # https://www.runoob.com/http/http-content-type.html
-    content_type = models.IntegerField(default=0, verbose_name='请求体类型', choices=(
-        (0, 'application/json'), (1, 'text/html'), (2, 'multipart/form-data'), (3, 'text/plain'),
-        (4, 'application/xml'), (1, 'application/x-www-form-urlencoded'),
-    ))
+    content_type = models.IntegerField(default=0, verbose_name='请求体类型', choices=ContentType)
     api_name = models.CharField(max_length=50, verbose_name='接口名称')
     describe = models.CharField(max_length=500, default='', verbose_name='描述')
     version = models.CharField(max_length=6, default='1.0.0', verbose_name='版本')
@@ -90,6 +92,7 @@ class Params(models.Model):
     create_time = models.DateTimeField(auto_created=True, auto_now=False, auto_now_add=True, verbose_name='创建时间')
     # updated_at = models.DateTimeField(auto_created=False, auto_now=True, verbose_name='更新时间')
     create_by = models.CharField(max_length=15, default='', verbose_name='创建人')
+
     # update_by = models.CharField(max_length=15, default='', verbose_name='更新人')
 
     class Meta:
@@ -108,15 +111,12 @@ class RequestLog(models.Model):
     api_type = models.IntegerField(default=0, verbose_name='接口类型', choices=(
         (0, 'GateWay'), (1, 'restful'), (3, 'other')
     ))
-    method = models.IntegerField(default=0, verbose_name='请求类型', choices=(
-        (0, 'POST'), (1, 'GET'), (2, 'DELETE'), (3, 'PUT')
-    ))
-    content_type = models.IntegerField(default=0, verbose_name='请求体类型', choices=(
-        (0, 'application/json'), (1, 'text/html'), (2, 'multipart/form-data'), (3, 'text/plain'),
-        (4, 'application/xml'), (1, 'application/x-www-form-urlencoded'),
-    ))
+    method = models.CharField(max_length=8, default='', verbose_name='请求类型')
+    content_type = models.CharField(max_length=30, default='', verbose_name='请求体类型')
     req = models.TextField(default='', verbose_name='请求示例')
     rsp = models.TextField(default='', verbose_name='返回示例')
+    err = models.TextField(default='', verbose_name='异常信息')
+    status_code = models.IntegerField(default=0, verbose_name='状态码')
     create_time = models.DateTimeField(auto_created=True, auto_now=False, auto_now_add=True, verbose_name='创建时间')
 
     class Meta:

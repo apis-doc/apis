@@ -20,7 +20,7 @@ from django.conf.urls import static, url
 
 urlpatterns = [
     # 接口管理
-    url(settings.PROJECT_NAME, include('main.urls')),
+    url(settings.PROJECT_NAME + '/', include('main.urls')),
 ]
 
 urlpatterns += [

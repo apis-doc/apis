@@ -36,4 +36,3 @@ class Log(object):
         # 为了全匹配，key->'key'
         encrypt_keys = settings.ENCRYPT_KEYS
         return contains(msg, [f"'{key}'" for key in encrypt_keys])
-
