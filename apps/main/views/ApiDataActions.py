@@ -4,16 +4,16 @@ from main.servers.DataAction import DataActionView
 from django.views import View
 from main.servers.Err import ClientErr
 from main.utils.decorates.request_to_response import request_to_response, allow_anonymous_user_access
+from main.utils.common import choices_to_dict
+from main.models.ApiModules import MethodType
 
 
 class ProjectDataAction(View):
-    allow_anonymous_user_access.add('post')
-    allow_anonymous_user_access.add('get')
-    allow_anonymous_user_access.add('put')
 
     @request_to_response
     def post(self, request):
         server = DataActionView(request, pro_dao, unique_fs=('code',))
+        server.params['create_by'] = request.user.username
         return server.create()
 
     @request_to_response
@@ -22,7 +22,7 @@ class ProjectDataAction(View):
 
     @request_to_response
     def put(self, request):
-        return DataActionView(request, pro_dao).update()
+        return DataActionView(request, pro_dao, unique_fs=('code',)).update()
 
     @request_to_response
     def delete(self, request):
@@ -30,14 +30,15 @@ class ProjectDataAction(View):
 
 
 class ApiDataAction(View):
-    allow_anonymous_user_access.add('post')
-    allow_anonymous_user_access.add('get')
-    allow_anonymous_user_access.add('put')
 
     @request_to_response
     def post(self, request):
-        pass
-        return dict()
+        server = DataActionView(request, api_dao)
+        server.params['create_by'] = request.user.username
+        method = server.params.pop('method', 0)
+        if not isinstance(method, int):
+            server.params['method'] = choices_to_dict(MethodType, key_is_filed=False).get(method, 15)
+        return server.create()
 
     @request_to_response
     def get(self, request):
@@ -45,7 +46,9 @@ class ApiDataAction(View):
 
     @request_to_response
     def put(self, request):
-        return DataActionView(request, api_dao).update()
+        server = DataActionView(request, api_dao)
+        server.params['update_by'] = request.user.username
+        return server.update()
 
     @request_to_response
     def delete(self, request):
@@ -53,14 +56,12 @@ class ApiDataAction(View):
 
 
 class ParamDataAction(View):
-    allow_anonymous_user_access.add('post')
-    allow_anonymous_user_access.add('get')
-    allow_anonymous_user_access.add('put')
 
     @request_to_response
     def post(self, request):
-        pass
-        return dict()
+        server = DataActionView(request, prm_dao)
+        server.params['create_by'] = request.user.username
+        return server.create()
 
     @request_to_response
     def get(self, request):
@@ -76,7 +77,6 @@ class ParamDataAction(View):
 
 
 class ApiLogDataAction(View):
-    allow_anonymous_user_access.add('get')
 
     @request_to_response
     def get(self, request):

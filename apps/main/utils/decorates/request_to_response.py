@@ -10,6 +10,8 @@ from django.http import JsonResponse
 from main.servers.Err import ClientErr, ServerErr
 from main.utils.logs import error
 
+from django.contrib.auth import login, authenticate
+
 
 def load_request_data(request: HttpRequest) -> dict:
     req_data = dict()
@@ -37,6 +39,15 @@ def load_request_data(request: HttpRequest) -> dict:
     return req_data
 
 
+def check_login(request):
+    if not (hasattr(request, 'user') and request.user.is_authenticated):
+        if settings.DEBUG is False:
+            raise ClientErr(msg='您的登录信息异常,请重新登录')
+        user = authenticate(request, username=settings.ANONYMOUS_USER, password=settings.ANONYMOUS_PWD)
+        login(request, user)
+        print(f'您尚未登录,为方便测试已使用{user}为您登录')
+
+
 allow_anonymous_user_access = set()
 
 
@@ -60,9 +71,8 @@ def request_to_response(function):
         request.request_data = req_data
         try:
             # todo 参数校验
-            if request.method.lower() not in allow_anonymous_user_access:
-                # login
-                pass
+            if request.method.lower() not in allow_anonymous_user_access and check_login(request):
+                raise ClientErr(msg='您的登录信息异常,请重新登录')
             args = list(args)
             args[1] = request
             resp.update(data=function(*args))

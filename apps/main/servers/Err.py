@@ -11,13 +11,13 @@ class Err(Exception):
 
 class ClientErr(Err):
 
-    def __init__(self, code='4000', msg='', detail=''):
+    def __init__(self, msg, code='4000', detail=''):
         default_msg = msg or '访问端错误,请仔细核对流程后重试'
         super().__init__(code=code, msg=default_msg, detail=detail)
 
 
 class ServerErr(Err):
-    def __init__(self, code='5000', msg='', detail=''):
+    def __init__(self, msg, code='5000', detail=''):
         default_msg = msg or '服务端错误, 请稍后重试'
         super().__init__(code=code, msg=default_msg, detail=detail)
 

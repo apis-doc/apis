@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main',
-    'django_comment_migrate',
+    'django_comment_migrate',  # 字段注释
+    'mirage',  # 字段加密
 ]
 
 MIDDLEWARE = [
@@ -142,4 +143,12 @@ DATABASES = {
         'PORT': DB_PORT,
         'PASSWORD': DB_PWD,
     }
+}
+
+XMMC = 'apis'
+REDIS_DATA = {
+    'LOGIN': {
+        'suffix': 'token',
+        'ex': 60 * 60,
+    },
 }

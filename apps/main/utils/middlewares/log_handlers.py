@@ -23,7 +23,7 @@ class ErrorLogMiddleware(MiddlewareMixin):
         :return:
         """
         # You can look for other values based on the req-id(uuid) in the META
-        exception.put('except', request_default_info(request))
+        exception.put('error', request_default_info(request))
 
 
 def get_user_req_info(request):
