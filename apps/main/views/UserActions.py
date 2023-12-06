@@ -17,7 +17,7 @@ class UserDataAction(View):
     @request_to_response
     def get(self, request):
         return DataActionView(request, user_dao).page(
-            dt_range={'is_superuser': False, 'id': request.user.id}
+            dt_range={'is_superuser': False}
         )
 
     @request_to_response

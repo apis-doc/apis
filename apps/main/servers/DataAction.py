@@ -53,10 +53,12 @@ class DataActionView(object):
         for fun in [self.is_repeat, self.exist_foreign]:
             fun()
         try:
-            self.dao.manage.create(**self.dao.params(self.params))
+            obj = self.dao.manage.create(**self.dao.params(self.params))
+            return {
+                'pk': obj.pk
+            }
         except IntegrityError as e:
-            self.db_error(e)
-        return dict()
+            return self.db_error(e)
 
     def page(self, is_display=False, dt_range=None, **kwargs) -> dict:
         page_index = int(self.params.get('page_number', 1))
@@ -67,13 +69,10 @@ class DataActionView(object):
         print('page->where: ', filter_params)
         dt_range = dt_range or dict()
         filter_params.update(**dt_range)  # 数据权限
-        objs = self.dao.manage.filter(**filter_params)
-        if kwargs.get('extra'):
-            objs = objs.extra(**kwargs.get('extra'))
-        if kwargs.get('values'):
-            objs = objs.values(*kwargs.get('values'))
-        else:
-            objs = objs.values()
+        extra = kwargs.get('extra') or dict()
+        values = kwargs.get('values') or ()
+        order_by = kwargs.get('order_by') or ('-update_time' if 'update_time' in self.dao.fields() else '-id',)
+        objs = self.dao.manage.filter(**filter_params).extra(**extra).values(*values).order_by(*order_by)
         if is_display:
             return {'show_info': self.display_foreign_fields(objs[start:end]), 'count': objs.count()}
         return {'show_info': tuple(objs[start:end]), 'count': objs.count()}

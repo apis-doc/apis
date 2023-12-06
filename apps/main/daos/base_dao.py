@@ -34,7 +34,7 @@ class Dao(object):
         equal = equal or ('username', 'password', 'id', 'det_site_id')
         ret = dict() if not hasattr(self._md, 'delete_time') else dict(delete_time=None)
         for key, value in origin.items():
-            if not value and not isinstance(value, bool):
+            if not value and not isinstance(value, bool) and value is not 0:
                 continue
             # $外键_id, $外键__外键model属性
             md_key = key.replace('_id', '').split('__')[0]

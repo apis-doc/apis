@@ -4,6 +4,7 @@ from main.utils.decorates.request_to_response import request_to_response, allow_
 from main.servers.Err import ClientErr
 from main.daos import user_dao
 from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.hashers import check_password
 from main.models.ApiModules import MethodType, ApiType, ParamType, ApiState
 from main.utils.common import display_choices
 
@@ -13,7 +14,6 @@ class AuthView(View):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         allow_anonymous_user_access.add('post')
-        allow_anonymous_user_access.add('put')
 
     @request_to_response
     def post(self, request):
@@ -22,6 +22,15 @@ class AuthView(View):
     @request_to_response
     def get(self, request):
         return self.get_info(request)
+
+    @request_to_response
+    def put(self, request):
+        online, req_data = request.user, load_request_data(request)
+        if not check_password(req_data.get('password'), online.password):
+            raise ClientErr('密码验证失败,请重新尝试')
+        online.set_password(req_data.get('new'))
+        online.save()
+        return dict()
 
     @request_to_response
     def delete(self, request):
@@ -51,7 +60,9 @@ class AuthView(View):
     def get_info(self, request):
         online = request.user or None
         user_info = {
-            'username': online.username if online else '-'
+            'username': online.username if online else '-',
+            'id': online.id if online else 0,
+            'name': online.get_full_name() if online else ''
         }
         return {
             'user': user_info,

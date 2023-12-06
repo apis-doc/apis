@@ -1,5 +1,6 @@
 # --*--*--*--*--*--*- Create by bh at 2023/10/9 19:51 -*--*--*--*--*--*--
 import json
+import uuid
 from django.views import View
 from main.utils.decorates.request_to_response import request_to_response, allow_anonymous_user_access
 from main.servers.DataAction import DataActionView
@@ -14,16 +15,17 @@ def get_json_data(data: dict) -> list:
     if not isinstance(data, dict):
         return ret
     for field, value in data.items():
-        is_array = value and isinstance(value, (list, tuple, set))
+        is_array = isinstance(value, (list, tuple, set))
         param = {
+            'id': field + str(uuid.uuid4()),
             'code': field,
             'param_type': 'array' if is_array else type(value).__name__,
-            'example': value[:1] if is_array else value,
+            'example': json.dumps(value[:1] if value and is_array else value),
             'children': [],
-            'is_require': True, 'is_null': True, 'is_service': True,
+            'is_require': True, 'is_null': False, 'is_service': True,
 
         }
-        value = value[0] if is_array else value
+        value = value[0] if is_array and value else value
         if isinstance(value, dict):
             param['children'] = get_json_data(value)
             param['example'] = '-'

@@ -7,7 +7,7 @@ MethodType = (
 )
 
 ApiType = (
-    (0, 'POST'), (1, 'GET'), (2, 'DELETE'), (3, 'PUT')
+    (0, 'Gateway'), (1, 'Restful')
 )
 
 ApiState = (
@@ -48,7 +48,7 @@ class Api(models.Model):
     owner = models.ForeignKey(to=Project, on_delete=models.PROTECT, verbose_name='所属项目')
 
     path = models.CharField(max_length=50, db_index=True, verbose_name='uri')
-    interface_id = models.CharField(max_length=30, default='', verbose_name='method-接口标识')
+    api_method = models.CharField(max_length=30, default='', verbose_name='method-接口标识')
     api_type = models.IntegerField(default=0, verbose_name='接口类型', choices=ApiType)
     # todo transfer
     method = models.IntegerField(default=0, verbose_name='请求类型', choices=MethodType)
@@ -96,6 +96,9 @@ class Params(models.Model):
 
     is_service = models.BooleanField(default=True, db_index=True, verbose_name='是否服务中')
     owner = models.ForeignKey(to=Api, on_delete=models.PROTECT, verbose_name='所属接口')
+    parent = models.ForeignKey(to='self', on_delete=models.PROTECT, null=True, blank=True, verbose_name='父级参数')
+    # 类型-response/request
+    own_type = models.CharField(max_length=10, default='request', verbose_name='所属类型')
 
     create_time = models.DateTimeField(auto_created=True, auto_now=False, auto_now_add=True, verbose_name='创建时间')
     # updated_at = models.DateTimeField(auto_created=False, auto_now=True, verbose_name='更新时间')
