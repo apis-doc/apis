@@ -16,14 +16,14 @@ def get_json_data(data: dict) -> list:
         return ret
     for field, value in data.items():
         is_array = isinstance(value, (list, tuple, set))
+        print(value)
         param = {
             'id': field + str(uuid.uuid4()),
             'code': field,
             'param_type': 'array' if is_array else type(value).__name__,
-            'example': json.dumps(value[:1] if value and is_array else value),
+            'example': json.dumps(value[:1] if value and is_array else value, ensure_ascii=False),
             'children': [],
             'is_require': True, 'is_null': False, 'is_service': True,
-
         }
         value = value[0] if is_array and value else value
         if isinstance(value, dict):

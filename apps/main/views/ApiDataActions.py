@@ -3,7 +3,7 @@ from main.daos import pro_dao, api_dao, prm_dao, req_log_dao
 from main.servers.DataAction import DataActionView
 from django.views import View
 from main.servers.Err import ClientErr
-from main.utils.decorates.request_to_response import request_to_response, allow_anonymous_user_access
+from main.utils.decorates.request_to_response import request_to_response, allow_anonymous_user_access, load_request_data
 from main.utils.common import choices_to_dict
 from main.models.ApiModules import MethodType
 
@@ -43,7 +43,10 @@ class ApiDataAction(View):
 
     @request_to_response
     def get(self, request):
-        return DataActionView(request, api_dao).page()
+        server = DataActionView(request, api_dao)
+        if server.params.get('is_state_not_equal_3', True):
+            return server.page(extra={'where': ['state != 3']})
+        return server.page()
 
     @request_to_response
     def put(self, request):
@@ -56,32 +59,33 @@ class ApiDataAction(View):
         return ClientErr(msg='未开放该功能')
 
 
+def creates(objs_dicts, api_id, own_type, create_by):
+    def create(params, parent_id=None):
+        params.pop('id', '')
+        params['create_by'] = create_by
+        params['owner_id'] = api_id
+        params['parent_id'] = parent_id
+        params['own_type'] = own_type
+        children = params.pop('children', [])
+        server.params = params
+        res = server.create()
+        if not children:
+            return res['pk']
+        for child in children:
+            create(child, res['pk'])
+        return res['pk']
+
+    server = DataActionView(None, prm_dao, params='pass')
+    for p in objs_dicts:
+        create(p, None)
+
+
 class ParamDataAction(View):
 
     @request_to_response
     def post(self, request):
-
-        def create(params, parent_id=None):
-            params.pop('id', '')
-            params['create_by'] = request.user.username
-            params['owner_id'] = api_id
-            params['parent_id'] = parent_id
-            params['own_type'] = own_type
-            children = params.pop('children', [])
-            server.params = params
-            res = server.create()
-            if not children:
-                return res['pk']
-            for child in children:
-                create(child, res['pk'])
-            return res['pk']
-
-        server = DataActionView(request, prm_dao)
-        param_list = server.params.get('param_list')
-        api_id = server.params.get('api_id')
-        own_type = server.params.get('own_type')
-        for p in param_list:
-            create(p, None)
+        params = load_request_data(request)
+        creates(params.get('param_list'), params.get('api_id'), params.get('own_type'), request.user.username)
         return {}
 
     @request_to_response

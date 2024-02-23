@@ -7,9 +7,8 @@ from django.db.utils import IntegrityError
 
 
 class DataActionView(object):
-    def __init__(self, request, dao: Dao, unique_fs=None):
-        self.params = request.request_data
-        self.user = request.user
+    def __init__(self, request, dao: Dao, unique_fs=None, params=None):
+        self.params = params or request.request_data
 
         self.dao = dao
         self.pk_name = self.dao.pk_name()

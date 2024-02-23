@@ -24,4 +24,11 @@ def display_choices(choices: tuple) -> list:
 
 def json_str(origin: str):
     format_str = origin.replace('"', "'").replace("'", '"')
-    return json.loads(format_str)
+    return json.loads(format_str, encoding='gbk')
+
+
+def choice_value(choices, match, default=None):
+    for choice in choices:
+        if choice[1] == match:
+            return choice[0]
+    return default

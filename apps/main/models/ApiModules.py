@@ -11,7 +11,10 @@ ApiType = (
 )
 
 ApiState = (
-    (0, '服务中'), (1, '已下线'), (3, '已迭代'), (4, '开发中'), (5, '迭代中-新接口并行服务中')
+    (0, '开发中'),
+    (2, '服务中'), (1, '已下线'),
+    # 被复制的旧接口状态转为3, 复制后的接口状态转为4, 待用户页面操作后转为2
+    (3, '已迭代'), (4, '迭代中'), (5, '迭代中-新旧接口并行服务中')
 )
 
 ParamType = (
@@ -46,6 +49,7 @@ class Project(models.Model):
 
 class Api(models.Model):
     owner = models.ForeignKey(to=Project, on_delete=models.PROTECT, verbose_name='所属项目')
+    origin = models.ForeignKey(to='self', on_delete=models.PROTECT, null=True, verbose_name='原始接口')
 
     path = models.CharField(max_length=50, db_index=True, verbose_name='uri')
     api_method = models.CharField(max_length=30, default='', verbose_name='method-接口标识')
@@ -91,7 +95,7 @@ class Params(models.Model):
     param_type = models.CharField(max_length=15, default='str', verbose_name='参数类型', choices=ParamType)
     is_require = models.BooleanField(default=False, verbose_name='是否必传')
     is_null = models.BooleanField(default=True, verbose_name='是否可为空')
-    example = models.CharField(max_length=30, default='', verbose_name='示例')
+    example = models.CharField(max_length=500, default='', verbose_name='示例')
     note = models.CharField(max_length=300, default='', verbose_name='备注')
 
     is_service = models.BooleanField(default=True, db_index=True, verbose_name='是否服务中')
