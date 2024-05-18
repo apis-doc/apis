@@ -1,6 +1,8 @@
 # --*--*--*--*--*--*- Create by bh at 2023/10/7 17:52 -*--*--*--*--*--*--
+import json
+
 from proxy.views import proxy_view
-from main.utils.decorates.request_to_response import load_request_data
+from main.utils.decorates.request_to_response import load_request_data, get_user_headers
 from main.utils.common import choice_value, json_str
 from main.models import RequestLog, Api, Params
 from main.models.ApiModules import MethodType
@@ -23,7 +25,8 @@ def put_request_log(request):
         'api_type': 0 if interface_id else 1,
         'interface_id': interface_id,
         'path': path,
-        'req': req_data,
+        'req': json.dumps(req_data),
+        'headers': json.dumps(get_user_headers(request.META, ignores=('HTTP_HOST',)))
     }
     # todo: login, user
     log = RequestLog.objects.create(**log_data)
@@ -62,11 +65,12 @@ def put_iteration_request(request):
         raise Exception(f'[apis]proxy api: {str(e)}')
     uris = redirect_url.replace('//', '').split('/')
     interface_id = req_data.get('method', '')
-    # todo: login, user
+    # todo: login, user,事务
     # 重新赋值接口并从原接口复制接口其他字段
     origin = origins[0]
     origin.state = 3
-    origin.save(update_fields=['state'])
+    origin.origin_id = origin.id
+    origin.save(update_fields=['state', 'origin_id'])
     new = Api.objects.create(**{
         'content_type': request.META.get('CONTENT_TYPE', ''),
         'api_type': 0 if interface_id else 1,
@@ -76,6 +80,7 @@ def put_iteration_request(request):
         'state': 4, 'origin_id': api_id, 'update_by': '接口变更',
         'api_method': interface_id, 'owner_id': origin.owner_id,
         'method': choice_value(MethodType, match=request.method, default=0),
+        'headers': json.dumps(get_user_headers(request.META, ignores=('HTTP_HOST',)))
     })
     copy_fds = ['api_name', 'describe', 'version', 'Attentions', 'note', 'maintainer',
                 'is_login', 'require_auth']

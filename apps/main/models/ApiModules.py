@@ -17,6 +17,13 @@ ApiState = (
     (3, '已迭代'), (4, '迭代中'), (5, '迭代中-新旧接口并行服务中')
 )
 
+ApiStateLevel = (
+    (0, 'warning'),
+    (2, 'success'), (1, 'dangers'),
+    # 被复制的旧接口状态转为3, 复制后的接口状态转为4, 待用户页面操作后转为2
+    (3, 'dangers'), (4, 'warning'), (5, 'warning')
+)
+
 ParamType = (
     ('str', 'str'), ('int', 'integer'), ('bool', 'boolean'),
     ('datetime', 'datetime'), ('array', 'array'), ('dict', 'object')
@@ -58,6 +65,7 @@ class Api(models.Model):
     method = models.IntegerField(default=0, verbose_name='请求类型', choices=MethodType)
     # https://www.runoob.com/http/http-content-type.html
     content_type = models.CharField(max_length=38, default='', verbose_name='请求体类型')
+    headers = models.TextField(default='', null=True, blank=True, verbose_name='请求头')
     api_name = models.CharField(max_length=50, verbose_name='接口名称')
     describe = models.CharField(max_length=500, default='', verbose_name='描述')
     version = models.CharField(max_length=6, default='1.0.0', verbose_name='版本')
@@ -69,7 +77,6 @@ class Api(models.Model):
     is_login = models.BooleanField(default=True, verbose_name='是否需要登录')
     require_auth = models.CharField(max_length=60, default='', verbose_name='权限')
 
-    # todo Actual format
     req_example = EncryptedTextField(default='', verbose_name='请求示例')
     rsp_example = EncryptedTextField(default='', verbose_name='返回示例')
 
@@ -126,6 +133,7 @@ class RequestLog(models.Model):
     api_type = models.IntegerField(default=0, verbose_name='接口类型', choices=ApiType)
     method = models.CharField(max_length=8, default='', verbose_name='请求类型')
     content_type = models.CharField(max_length=30, default='', verbose_name='请求体类型')
+    headers = models.TextField(default='', null=True, blank=True, verbose_name='请求头')
     req = EncryptedTextField(default='', verbose_name='请求示例')
     rsp = EncryptedTextField(default='', verbose_name='返回示例')
     err = EncryptedTextField(default='', verbose_name='异常信息')
@@ -136,3 +144,48 @@ class RequestLog(models.Model):
         verbose_name = '接口库表'
         verbose_name_plural = verbose_name
         db_table = 'request_logs'
+
+
+class Notice(models.Model):
+    """用户关注项目表"""
+
+    # 使用$modelId 是因为dao工具对_id做了外键处理, 剔除这个查询条件, 参见base_dao.py
+    userId = models.IntegerField(db_index=True, verbose_name='用户ID')
+    projectId = models.BigIntegerField(db_index=True, verbose_name='项目ID')
+    project_name = models.CharField(max_length=30, default='', verbose_name='名称')
+
+    # True-已关注, False-取消关注
+    is_valid = models.BooleanField(default=True, verbose_name='是否有效')
+    # 是否已读状态, 用于在接口发布后更新读取状态, 然后根据读取状态通知用户接口文档更新
+    is_read = models.BooleanField(default=True, verbose_name='是否已读')
+
+    create_time = models.DateTimeField(auto_created=True, auto_now_add=True, auto_now=False, verbose_name='创建时间')
+    update_time = models.DateTimeField(auto_now=True, auto_created=True, verbose_name='更新时间')
+
+    class Meta:
+        verbose_name = '关注列表'
+        verbose_name_plural = verbose_name
+        db_table = 'notices'
+
+    def __str__(self):
+        return f'{self.userId}-{self.projectId}'
+
+
+class Release(models.Model):
+    projectId = models.BigIntegerField(db_index=True, verbose_name='项目ID')
+    apiId = models.BigIntegerField(db_index=True, verbose_name='接口ID')
+    # 在这里保存, 不去查接口信息了
+    api_name = models.CharField(max_length=50, default='', verbose_name='接口名称')
+    api_describe = models.CharField(max_length=500, default='', verbose_name='描述')
+    content = models.CharField(max_length=300, default='', verbose_name='内容简述')
+
+    by = models.CharField(max_length=200, default='', verbose_name='发布人')
+    create_time = models.DateTimeField(auto_created=True, auto_now_add=True, auto_now=False, verbose_name='创建时间')
+
+    class Meta:
+        verbose_name = '发布历史表'
+        verbose_name_plural = verbose_name
+        db_table = 'releases'
+
+    def __str__(self):
+        return f'{self.projectId}-{self.apiId}'

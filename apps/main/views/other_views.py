@@ -2,9 +2,11 @@
 import json
 import uuid
 from django.views import View
-from main.utils.decorates.request_to_response import request_to_response, allow_anonymous_user_access
+from main.utils.decorates.request_to_response import (
+    request_to_response, allow_anonymous_user_access, load_request_data
+)
 from main.servers.DataAction import DataActionView
-from main.daos import req_log_dao
+from main.daos import req_log_dao, api_dao, ntc_dao
 from main.servers.Err import ClientErr
 from django.conf import settings
 from main.utils.common import json_str
@@ -58,3 +60,30 @@ class JsonParseParam(View):
             'req': get_json_data(json_str(req_log.req)) if req_log.req else [],
             'rsp': get_json_data(json_str(req_log.rsp)) if req_log.rsp else [],
         }
+
+
+class HomeStaticAction(View):
+
+    @request_to_response
+    def get(self, request):
+        config, user = request.request_data['config'], request.user
+        for staticConf in config:
+            values = []
+            sid, length = staticConf['id'], staticConf['length']
+            if sid == 'add':
+                values = api_dao.query({'create_by': user}).values(
+                    'id', 'api_name', 'describe', 'create_time'
+                ).order_by('-create_time')[:length]
+            elif sid == 'update':
+                values = api_dao.query({'update_by__contains': user}).values(
+                    'id', 'api_name', 'describe', 'update_time'
+                ).order_by('-update_time')[:length]
+            elif sid == 'notices':
+                values = ntc_dao.query({
+                    'userId': user.id, 'is_valid': True, 'is_read': False
+                }).order_by('update_time').values(
+                    'update_time', 'projectId', 'project_name'
+                )[:length]
+            staticConf['values'] = tuple(values)
+        config.sort(key=lambda item: item['num'])
+        return config

@@ -48,6 +48,17 @@ def check_login(request):
         print(f'您尚未登录,为方便测试已使用{user}为您登录')
 
 
+def get_user_headers(meta, ignores: tuple = None) -> dict:
+    ret, ignores = dict(), ignores or tuple()
+    for key, value in meta.items():
+        if key in ignores:
+            continue
+        if not key.startswith('HTTP_'):
+            continue
+        ret[key] = value
+    return ret
+
+
 allow_anonymous_user_access = set()
 
 

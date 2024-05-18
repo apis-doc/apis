@@ -2,11 +2,12 @@
 from django.views import View
 from main.utils.decorates.request_to_response import request_to_response, allow_anonymous_user_access, load_request_data
 from main.servers.Err import ClientErr
-from main.daos import user_dao
+from main.daos import user_dao, uc_dao
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.hashers import check_password
-from main.models.ApiModules import MethodType, ApiType, ParamType, ApiState
+from main.models.ApiModules import MethodType, ApiType, ParamType, ApiState, ApiStateLevel
 from main.utils.common import display_choices
+from django.conf import settings
 
 
 class AuthView(View):
@@ -64,10 +65,18 @@ class AuthView(View):
             'id': online.id if online else 0,
             'name': online.get_full_name() if online else ''
         }
+        # 获取个性化配置
+        config = dict()
+        if online:
+            uconfig = uc_dao.manage.filter(user=online)
+            config = uconfig[0].config if uconfig else config
         return {
             'user': user_info,
             'api_type': display_choices(ApiType),
             'param_type': display_choices(ParamType),
             'api_state': display_choices(ApiState),
             'method_type': display_choices(MethodType),
+            'api_state_level': display_choices(ApiStateLevel),
+            'iterator_states': settings.ITERATOR_STATES,
+            'config': config,
         }

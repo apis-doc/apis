@@ -28,3 +28,15 @@ pms_dao = Dao(
     model=Permission,
     contains=('name',)
 )
+
+ntc_dao = Dao(
+    model=Notice,
+)
+
+rla_dao = Dao(
+    model=Release, startswith=('content',)
+)
+
+uc_dao = Dao(
+    model=UserConfig,
+)

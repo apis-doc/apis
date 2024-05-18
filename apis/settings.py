@@ -127,6 +127,9 @@ DCM_COMMENT_KEY = 'verbose_name'
 # user settings
 PROJECT_NAME = 'apis'
 
+# 归于迭代历史的接口状态
+ITERATOR_STATES = (1, 2, 3, 5)
+
 # config import
 from apis.conf.log_settings import LOGGING, ENCRYPT_KEYS
 from apis.conf.project_conf import *

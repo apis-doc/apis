@@ -52,6 +52,7 @@ class DataActionView(object):
         for fun in [self.is_repeat, self.exist_foreign]:
             fun()
         try:
+            print()
             obj = self.dao.manage.create(**self.dao.params(self.params))
             return {
                 'pk': obj.pk
@@ -65,12 +66,12 @@ class DataActionView(object):
         start = (page_index - 1) * offset
         end = page_index * offset
         filter_params = self.dao.where(self.params)
-        print('page->where: ', filter_params)
         dt_range = dt_range or dict()
         filter_params.update(**dt_range)  # 数据权限
         extra = kwargs.get('extra') or dict()
         values = kwargs.get('values') or ()
         order_by = kwargs.get('order_by') or ('-update_time' if 'update_time' in self.dao.fields() else '-id',)
+        print('page->where: ', filter_params)
         objs = self.dao.manage.filter(**filter_params).extra(**extra).values(*values).order_by(*order_by)
         if is_display:
             return {'show_info': self.display_foreign_fields(objs[start:end]), 'count': objs.count()}
